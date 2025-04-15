@@ -34,7 +34,7 @@ if uploaded_file:
     st.subheader("📈 Curva de Confiabilidade R(t)")
     st.plotly_chart(fig_conf, use_container_width=True)
 
-    st.subheader("📉 Curva de Probabilidade de Falha 1 - R(t)")
+    st.subheader("📉 Curva de Probabilidade de Falha")
     st.plotly_chart(fig_falha, use_container_width=True)
 
     st.subheader("📌 Resultado da Análise Weibull")
