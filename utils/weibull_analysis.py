@@ -49,10 +49,10 @@ def gerar_graficos_weibull_interativos_completo(ttf, beta, eta):
         height=400
     )
 
-    # 3. Curva de Probabilidade de Falha 1 - R(t)
+    # 3. Curva de Probabilidade de Falha
     F = (1 - R) * 100
     fig_falha = go.Figure()
-    fig_falha.add_trace(go.Scatter(x=x, y=F, mode="lines", name="Probabilidade de Falha 1 - R(t)", line=dict(color="orange")))
+    fig_falha.add_trace(go.Scatter(x=x, y=F, mode="lines", name="Probabilidade de Falha", line=dict(color="orange")))
     fig_falha.update_layout(
         title="Curva de Probabilidade de Falha",
         xaxis_title="Tempo (horas)",
