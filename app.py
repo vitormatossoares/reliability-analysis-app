@@ -13,7 +13,7 @@ with open("data/exemplo_simulado_weibull.xlsx", "rb") as file:
     st.download_button(
         label="📅 Baixar modelo de planilha",
         data=file,
-        file_name="modelo_weibull.xlsx",
+        file_name="modelo_analise.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
