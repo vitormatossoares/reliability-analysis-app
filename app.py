@@ -9,12 +9,12 @@ st.set_page_config(layout="wide")
 st.title("🔧 Análise de Confiabilidade - Distribuição Weibull")
 
 # Botão de download do modelo
-with open("data/exemplo.csv", "rb") as file:
+with open("data/exemplo_simulado_weibull.xlsx", "rb") as file:
     st.download_button(
         label="📅 Baixar modelo de planilha",
         data=file,
-        file_name="modelo_weibull.csv",
-        mime="text/csv"
+        file_name="modelo_weibull.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
 # Upload do usuário
@@ -41,52 +41,58 @@ if uploaded_file:
 
     # Calcular TTF
     df['TTF_horas'] = (df['Data hora in'] - df['Data hora fim'].shift(1)).dt.total_seconds() / 3600
-    ttf = df['TTF_horas'].dropna()
 
     st.subheader("📊 Dados Filtrados")
     st.dataframe(df)
 
     st.markdown("---")
-    
-    st.markdown("---")
     st.subheader("🌎 Mapa de Calor - Horas Paradas por Mês/Ano")
     fig_calor = gerar_mapa_calor(df)
     st.plotly_chart(fig_calor, use_container_width=True)
-    
+
     st.subheader("📊 Pareto por Equipamento")
     fig_pareto_eqp = gerar_pareto_equipamentos(df)
     st.plotly_chart(fig_pareto_eqp, use_container_width=True)
-    
+
     st.subheader("📉 Pareto das Falhas por Tipo")
     fig_pareto_falhas = gerar_pareto_falhas(df)
     st.plotly_chart(fig_pareto_falhas, use_container_width=True)
 
+    st.markdown("---")
+    st.subheader("📈 Curvas de Confiabilidade e Probabilidade de Falha")
 
-    if len(ttf) >= 3:
-        df, beta, eta, ttf = calcular_ttf_weibull(df)
-        qq_img, fig_conf, fig_falha, analise = gerar_graficos_weibull_interativos_completo(ttf, beta, eta)
+    resultados = []
+    equipamentos_analise = equipamentos if equipamento_selecionado == "Todos" else [equipamento_selecionado]
+    for eqp in equipamentos_analise:
+        st.markdown(f"### Equipamento: {eqp}")
+        df_eqp = df[df['Equipamento'] == eqp].copy()
+        df_eqp['TTF_horas'] = (df_eqp['Data hora in'] - df_eqp['Data hora fim'].shift(1)).dt.total_seconds() / 3600
+        ttf_eqp = df_eqp['TTF_horas'].dropna()
 
+        if len(ttf_eqp) >= 3:
+            _, beta, eta, ttf_eqp = calcular_ttf_weibull(df_eqp)
+            qq_img, fig_conf, fig_falha, analise = gerar_graficos_weibull_interativos_completo(ttf_eqp, beta, eta)
+
+            col1, col2 = st.columns(2)
+            with col1:
+                st.plotly_chart(fig_conf, use_container_width=True)
+            with col2:
+                st.plotly_chart(fig_falha, use_container_width=True)
+
+            st.image(qq_img, caption=f"QQ Plot - {eqp}")
+            st.markdown(f"**Beta (β):** `{beta:.2f}`")
+            st.markdown(f"**Eta (η):** `{eta:.2f}` horas")
+            st.markdown(analise)
+
+            resultados.append({"Equipamento": eqp, "Beta (β)": round(beta, 2), "Eta (η) (h)": round(eta, 2), "Diagnóstico": analise})
+        else:
+            st.warning(f"Equipamento `{eqp}` não possui dados suficientes para análise de Weibull.")
+
+    # Mostrar tabela de resultados ao final
+    if resultados:
         st.markdown("---")
-        st.subheader("📈 QQ Plot Weibull")
-        st.image(qq_img, caption="QQ Plot Weibull")
-
-        st.subheader("📉 Curvas de Confiabilidade e Probabilidade de Falha")
-        col1, col2 = st.columns(2)
-        with col1:
-            st.plotly_chart(fig_conf, use_container_width=True)
-        with col2:
-            st.plotly_chart(fig_falha, use_container_width=True)
-
-        st.markdown("---")
-        st.subheader("📌 Resultado da Análise Weibull")
-        if equipamento_selecionado != "Todos":
-            st.markdown(f"**Equipamento:** `{equipamento_selecionado}`")
-        st.markdown(f"**Beta (β):** `{beta:.2f}`")
-        st.markdown(f"**Eta (η):** `{eta:.2f}` horas")
-        st.markdown(analise)
-    else:
-        st.warning("Esse conjunto de dados não possui dados suficientes para análise de Weibull (mínimo de 3 TTFs).")
-
+        st.subheader("📋 Tabela Resumo da Análise Weibull por Equipamento")
+        st.dataframe(pd.DataFrame(resultados))
 
 # Rodapé
 st.markdown("---")
